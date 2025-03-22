@@ -1,3 +1,3 @@
-# Change Log
+# Changelog
 
--   Release information can be added here or can be tracked via github release.
+**Please see https://github.com/securesauce/vscode-precaution/releases for the latest release notes.**
