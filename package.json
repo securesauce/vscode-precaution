@@ -105,7 +105,6 @@
                     },
                     "type": "array"
                 },
-                "precli.showNotifications": {
                 "precaution.showNotifications": {
                     "default": "off",
                     "description": "Controls when notifications are shown by this extension.",
