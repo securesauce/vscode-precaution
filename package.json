@@ -18,6 +18,7 @@
     "bugs": {
         "url": "https://github.com/securesauce/vscode-precaution/issues"
     },
+    "icon": "icon.png",
     "galleryBanner": {
         "color": "#1e415e",
         "theme": "dark"
