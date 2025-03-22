@@ -145,12 +145,12 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
     return diagnostics
 
 
-def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
-    if _codes[0] == "error":
+def _get_severity(code: str) -> lsp.DiagnosticSeverity:
+    if code == "error":
         return lsp.DiagnosticSeverity.Error
-    if _codes[0] == "warning":
+    if code == "warning":
         return lsp.DiagnosticSeverity.Warning
-    if _codes[0] == "note":
+    if code == "note":
         return lsp.DiagnosticSeverity.Information
 
     return lsp.DiagnosticSeverity.Information
@@ -404,7 +404,7 @@ def _run_tool_on_document(
         #     argv += ["--from-stdin", document.path]
         # Read up on how your tool handles contents via stdin. If stdin is not supported use
         # set use_stdin to False, or provide path, what ever is appropriate for your tool.
-        argv += []
+        argv += ["-"]
     else:
         argv += [document.path]
 
