@@ -7,9 +7,7 @@ import copy
 import json
 import os
 import pathlib
-import re
 import sys
-import sysconfig
 import traceback
 from typing import Any, Optional, Sequence
 
@@ -81,7 +79,7 @@ TOOL_ARGS = ["--json"]
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
     LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
@@ -89,7 +87,7 @@ def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
 def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
     LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
@@ -97,7 +95,7 @@ def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
 def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
     LSP_SERVER.publish_diagnostics(document.uri, [])
 
@@ -135,10 +133,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 end=end,
             ),
             message=result["message"]["text"],
-            severity=_get_severity(
-                result["properties"]["issue_severity"],
-                result["properties"]["issue_confidence"],
-            ),
+            severity=_get_severity(result["level"]),
             code=f"{rule_id}:{rule_name}",
             code_description=lsp.CodeDescription(
                 href=rule["helpUri"],
@@ -151,11 +146,11 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
 
 
 def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
-    if _codes[0] == "HIGH":
+    if _codes[0] == "error":
         return lsp.DiagnosticSeverity.Error
-    if _codes[0] == "MEDIUM":
+    if _codes[0] == "warning":
         return lsp.DiagnosticSeverity.Warning
-    if _codes[0] == "LOW":
+    if _codes[0] == "note":
         return lsp.DiagnosticSeverity.Information
 
     return lsp.DiagnosticSeverity.Information
@@ -182,7 +177,7 @@ def formatting(params: lsp.DocumentFormattingParams) -> list[lsp.TextEdit] | Non
     # formatting support on save. You have to return an array of lsp.TextEdit
     # objects, to provide your formatted results.
 
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     edits = _formatting_helper(document)
     if edits:
         return edits
@@ -349,6 +344,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+# pylint: disable=too-many-branches
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -539,7 +535,8 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
+                # Also update `_run_tool_on_document` function and `utils.run_module` in
+                # `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )

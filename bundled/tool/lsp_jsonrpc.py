@@ -193,6 +193,7 @@ def get_or_start_json_rpc(
     return res
 
 
+# pylint: disable=too-few-public-methods
 class RpcRunResult:
     """Object to hold result from running tool over RPC."""
 
@@ -202,7 +203,7 @@ class RpcRunResult:
         self.exception: Optional[str] = exception
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def run_over_json_rpc(
     workspace: str,
     interpreter: Sequence[str],
