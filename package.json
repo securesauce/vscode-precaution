@@ -25,6 +25,8 @@
     },
     "keywords": [
         "python",
+        "linting",
+        "formatting",
         "precaution"
     ],
     "engines": {
@@ -45,7 +47,11 @@
         }
     },
     "activationEvents": [
+        "onLanguage:go",
+        "onLanguage:java",
         "onLanguage:python",
+        "workspaceContains:*.go",
+        "workspaceContains:*.java",
         "workspaceContains:*.py"
     ],
     "main": "./dist/extension.js",
