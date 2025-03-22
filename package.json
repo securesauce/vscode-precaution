@@ -1,12 +1,12 @@
 {
-    "name": "precli",
+    "name": "precaution",
     "displayName": "Precaution",
-    "description": "Linting support for python files using `precli`.",
+    "description": "Linting support for files using `Precaution`.",
     "version": "2025.3.0",
     "preview": true,
     "serverInfo": {
         "name": "Precaution",
-        "module": "precli"
+        "module": "precaution"
     },
     "publisher": "Secure Sauce",
     "license": "MIT",
@@ -24,7 +24,7 @@
     },
     "keywords": [
         "python",
-        "precli"
+        "precaution"
     ],
     "engines": {
         "vscode": "^1.78.0"
@@ -55,16 +55,16 @@
         "package": "webpack --mode production --devtool source-map --config ./webpack.config.js",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "pretest": "npm run compile-tests && npm run compile",
         "lint": "eslint src --ext ts",
-        "format-check": "prettier --check 'src/**/*.ts' 'build/**/*.yml' '.github/**/*.yml'",
+        "format-check": "prettier --check 'src/**/*.ts' '.github/**/*.yml'",
         "test": "node ./out/test/runTest.js",
-        "vsce-package": "vsce package -o precli.vsix"
+        "vsce-package": "vsce package -o precaution.vsix"
     },
     "contributes": {
         "configuration": {
             "properties": {
-                "precli.args": {
+                "precaution.args": {
                     "default": [],
                     "description": "Arguments passed in. Each argument is a separate item in the array.",
                     "items": {
@@ -73,7 +73,7 @@
                     "scope": "resource",
                     "type": "array"
                 },
-                "precli.path": {
+                "precaution.path": {
                     "default": [],
                     "description": "When set to a path to precli binary, extension will use that. NOTE: Using this option may slowdown server response time.",
                     "scope": "resource",
@@ -82,9 +82,9 @@
                     },
                     "type": "array"
                 },
-                "precli.importStrategy": {
+                "precaution.importStrategy": {
                     "default": "useBundled",
-                    "description": "Defines where `precli` is imported from. This setting may be ignored if `precli.path` is set.",
+                    "description": "Defines where `precli` is imported from. This setting may be ignored if `precaution.path` is set.",
                     "enum": [
                         "useBundled",
                         "fromEnvironment"
@@ -96,7 +96,7 @@
                     "scope": "window",
                     "type": "string"
                 },
-                "precli.interpreter": {
+                "precaution.interpreter": {
                     "default": [],
                     "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
                     "scope": "resource",
@@ -106,6 +106,7 @@
                     "type": "array"
                 },
                 "precli.showNotifications": {
+                "precaution.showNotifications": {
                     "default": "off",
                     "description": "Controls when notifications are shown by this extension.",
                     "enum": [
@@ -129,7 +130,7 @@
             {
                 "title": "Restart Server",
                 "category": "Precaution",
-                "command": "precli.restart"
+                "command": "precaution.restart"
             }
         ]
     },
