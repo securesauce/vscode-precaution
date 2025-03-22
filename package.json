@@ -8,7 +8,7 @@
         "name": "Precaution",
         "module": "precaution"
     },
-    "publisher": "Secure Sauce",
+    "publisher": "securesauce",
     "license": "MIT",
     "homepage": "https://github.com/securesauce/vscode-precaution",
     "repository": {
