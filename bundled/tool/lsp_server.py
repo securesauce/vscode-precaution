@@ -67,14 +67,9 @@ LSP_SERVER = server.LanguageServer(
 
 TOOL_MODULE = "precli"
 TOOL_DISPLAY = "Precaution"
-
-# TODO: Update TOOL_ARGS with default argument you have to pass to your tool in
-# all scenarios.
-TOOL_ARGS = []  # default arguments always passed to your tool.
+TOOL_ARGS = ["--json"]
 
 
-# TODO: If your tool is a linter then update this section.
-# Delete "Linting features" section if your tool is NOT a linter.
 # **********************************************************
 # Linting features start here
 # **********************************************************
@@ -108,70 +103,62 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
-    # TODO: Determine if your tool supports passing file content via stdin.
-    # If you want to support linting on change then your tool will need to
-    # support linting over stdin to be effective. Read, and update
-    # _run_tool_on_document and _run_tool functions as needed for your project.
     result = _run_tool_on_document(document)
-    return _parse_output_using_regex(result.stdout) if result.stdout else []
+    return _parse_output(result.stdout) if result.stdout else []
 
 
-# TODO: If your linter outputs in a known format like JSON, then parse
-# accordingly. But incase you need to parse the output using RegEx here
-# is a helper you can work with.
-# flake8 example:
-# If you use following format argument with flake8 you can use the regex below to parse it.
-# TOOL_ARGS += ["--format='%(row)d,%(col)d,%(code).1s,%(code)s:%(text)s'"]
-# DIAGNOSTIC_RE =
-#    r"(?P<line>\d+),(?P<column>-?\d+),(?P<type>\w+),(?P<code>\w+\d+):(?P<message>[^\r\n]*)"
-DIAGNOSTIC_RE = re.compile(r"")
-
-
-def _parse_output_using_regex(content: str) -> list[lsp.Diagnostic]:
-    lines: list[str] = content.splitlines()
+def _parse_output(content: str) -> list[lsp.Diagnostic]:
+    run = json.loads(content)["runs"][0] or {}
+    results = run.get("results") or []
     diagnostics: list[lsp.Diagnostic] = []
 
-    # TODO: Determine if your linter reports line numbers starting at 1 (True) or 0 (False).
-    line_at_1 = True
-    # TODO: Determine if your linter reports column numbers starting at 1 (True) or 0 (False).
-    column_at_1 = True
+    line_offset = 1
+    col_offset = 1
 
-    line_offset = 1 if line_at_1 else 0
-    col_offset = 1 if column_at_1 else 0
-    for line in lines:
-        if line.startswith("'") and line.endswith("'"):
-            line = line[1:-1]
-        match = DIAGNOSTIC_RE.match(line)
-        if match:
-            data = match.groupdict()
-            position = lsp.Position(
-                line=max([int(data["line"]) - line_offset, 0]),
-                character=int(data["column"]) - col_offset,
-            )
-            diagnostic = lsp.Diagnostic(
-                range=lsp.Range(
-                    start=position,
-                    end=position,
-                ),
-                message=data.get("message"),
-                severity=_get_severity(data["code"], data["type"]),
-                code=data["code"],
-                source=TOOL_MODULE,
-            )
-            diagnostics.append(diagnostic)
+    for result in results:
+        location = result["locations"][0]["physicalLocation"]
+        rule = run["tool"]["driver"]["rules"][result["ruleIndex"]]
+        rule_id = result["ruleId"]
+        rule_name = rule["name"]
+
+        start = lsp.Position(
+            line=location["region"]["startLine"] - line_offset,
+            character=location["region"]["startColumn"] - col_offset,
+        )
+        end = lsp.Position(
+            line=location["region"]["endLine"] - line_offset,
+            character=location["region"]["endColumn"] - col_offset,
+        )
+        diagnostic = lsp.Diagnostic(
+            range=lsp.Range(
+                start=start,
+                end=end,
+            ),
+            message=result["message"]["text"],
+            severity=_get_severity(
+                result["properties"]["issue_severity"],
+                result["properties"]["issue_confidence"],
+            ),
+            code=f"{rule_id}:{rule_name}",
+            code_description=lsp.CodeDescription(
+                href=rule["helpUri"],
+            ),
+            source=TOOL_DISPLAY,
+        )
+        diagnostics.append(diagnostic)
 
     return diagnostics
 
 
-# TODO: if you want to handle setting specific severity for your linter
-# in a user configurable way, then look at look at how it is implemented
-# for `pylint` extension from our team.
-# Pylint: https://github.com/microsoft/vscode-pylint
-# Follow the flow of severity from the settings in package.json to the server.
 def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
-    # TODO: All reported issues from linter are treated as warning.
-    # change it as appropriate for your linter.
-    return lsp.DiagnosticSeverity.Warning
+    if _codes[0] == "HIGH":
+        return lsp.DiagnosticSeverity.Error
+    if _codes[0] == "MEDIUM":
+        return lsp.DiagnosticSeverity.Warning
+    if _codes[0] == "LOW":
+        return lsp.DiagnosticSeverity.Information
+
+    return lsp.DiagnosticSeverity.Information
 
 
 # **********************************************************
@@ -572,22 +559,26 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
+    """Log a message to output."""
     LSP_SERVER.show_message_log(message, msg_type)
 
 
 def log_error(message: str) -> None:
+    """Log an error."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Error)
 
 
 def log_warning(message: str) -> None:
+    """Log an warning."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Warning)
 
 
 def log_always(message: str) -> None:
+    """Log a message always."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Info)
