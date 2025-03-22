@@ -17,8 +17,6 @@ def _install_bundle(session: nox.Session) -> None:
         "-t",
         "./bundled/libs",
         "--no-cache-dir",
-        "--implementation",
-        "py",
         "--no-deps",
         "--upgrade",
         "-r",
