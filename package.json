@@ -80,6 +80,12 @@
                     "scope": "resource",
                     "type": "array"
                 },
+                "precaution.enabled": {
+                    "default": true,
+                    "markdownDescription": "Enable/disable linting Python files with Precaution.",
+                    "scope": "resource",
+                    "type": "boolean"
+                },
                 "precaution.path": {
                     "default": [],
                     "description": "When set to a path to precli binary, extension will use that. NOTE: Using this option may slowdown server response time.",
