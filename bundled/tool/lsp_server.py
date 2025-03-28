@@ -118,6 +118,11 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
         rule = run["tool"]["driver"]["rules"][result["ruleIndex"]]
         rule_id = result["ruleId"]
         rule_name = rule["name"]
+        level = (
+            result.get("level")
+            or rule["defaultConfiguration"].get("level")
+            or "warning"
+        )
 
         start = lsp.Position(
             line=location["region"]["startLine"] - line_offset,
@@ -133,7 +138,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 end=end,
             ),
             message=result["message"]["text"],
-            severity=_get_severity(result["level"]),
+            severity=_get_severity(level),
             code=f"{rule_id}:{rule_name}",
             code_description=lsp.CodeDescription(
                 href=rule["helpUri"],
