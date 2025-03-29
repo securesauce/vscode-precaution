@@ -118,6 +118,11 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
         rule = run["tool"]["driver"]["rules"][result["ruleIndex"]]
         rule_id = result["ruleId"]
         rule_name = rule["name"]
+        level = (
+            result.get("level")
+            or rule["defaultConfiguration"].get("level")
+            or "warning"
+        )
 
         start = lsp.Position(
             line=location["region"]["startLine"] - line_offset,
@@ -133,7 +138,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 end=end,
             ),
             message=result["message"]["text"],
-            severity=_get_severity(result["level"]),
+            severity=_get_severity(level),
             code=f"{rule_id}:{rule_name}",
             code_description=lsp.CodeDescription(
                 href=rule["helpUri"],
@@ -145,12 +150,12 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
     return diagnostics
 
 
-def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
-    if _codes[0] == "error":
+def _get_severity(code: str) -> lsp.DiagnosticSeverity:
+    if code == "error":
         return lsp.DiagnosticSeverity.Error
-    if _codes[0] == "warning":
+    if code == "warning":
         return lsp.DiagnosticSeverity.Warning
-    if _codes[0] == "note":
+    if code == "note":
         return lsp.DiagnosticSeverity.Information
 
     return lsp.DiagnosticSeverity.Information
@@ -268,6 +273,7 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
 
 def _get_global_defaults():
     return {
+        "enabled": GLOBAL_SETTINGS.get("enabled", True),
         "path": GLOBAL_SETTINGS.get("path", []),
         "interpreter": GLOBAL_SETTINGS.get("interpreter", [sys.executable]),
         "args": GLOBAL_SETTINGS.get("args", []),
@@ -344,7 +350,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -357,18 +363,24 @@ def _run_tool_on_document(
     """
     if extra_args is None:
         extra_args = []
-    if str(document.uri).startswith("vscode-notebook-cell"):
-        # TODO: Decide on if you want to skip notebook cells.
-        # Skip notebook cells
-        return None
-
-    if utils.is_stdlib_file(document.path):
-        # TODO: Decide on if you want to skip standard library files.
-        # Skip standard library python files.
-        return None
 
     # deep copy here to prevent accidentally updating global settings.
     settings = copy.deepcopy(_get_settings_by_document(document))
+
+    if not settings["enabled"]:
+        log_warning(f"Skipping file [Linting Disabled]: {document.path}")
+        log_warning("See `precaution.enabled` in settings.json to enabling linting.")
+        return None
+
+    if str(document.uri).startswith("vscode-notebook-cell"):
+        log_warning(f"Skipping notebook cells [Not Supported]: {str(document.uri)}")
+        return None
+
+    if utils.is_stdlib_file(document.path):
+        log_warning(
+            f"Skipping standard library file (stdlib excluded): {document.path}"
+        )
+        return None
 
     code_workspace = settings["workspaceFS"]
     cwd = settings["cwd"]
@@ -404,7 +416,7 @@ def _run_tool_on_document(
         #     argv += ["--from-stdin", document.path]
         # Read up on how your tool handles contents via stdin. If stdin is not supported use
         # set use_stdin to False, or provide path, what ever is appropriate for your tool.
-        argv += []
+        argv += ["-"]
     else:
         argv += [document.path]
 

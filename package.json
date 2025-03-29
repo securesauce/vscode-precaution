@@ -1,14 +1,14 @@
 {
     "name": "precaution",
     "displayName": "Precaution",
-    "description": "Linting support for files using `Precaution`.",
-    "version": "2025.3.0",
+    "description": "Linting support for files using Precaution.",
+    "version": "2025.3.2",
     "preview": true,
     "serverInfo": {
         "name": "Precaution",
         "module": "precaution"
     },
-    "publisher": "Secure Sauce",
+    "publisher": "securesauce",
     "license": "MIT",
     "homepage": "https://github.com/securesauce/vscode-precaution",
     "repository": {
@@ -18,12 +18,15 @@
     "bugs": {
         "url": "https://github.com/securesauce/vscode-precaution/issues"
     },
+    "icon": "icon.png",
     "galleryBanner": {
         "color": "#1e415e",
         "theme": "dark"
     },
     "keywords": [
         "python",
+        "linting",
+        "formatting",
         "precaution"
     ],
     "engines": {
@@ -44,7 +47,11 @@
         }
     },
     "activationEvents": [
+        "onLanguage:go",
+        "onLanguage:java",
         "onLanguage:python",
+        "workspaceContains:*.go",
+        "workspaceContains:*.java",
         "workspaceContains:*.py"
     ],
     "main": "./dist/extension.js",
@@ -72,6 +79,12 @@
                     },
                     "scope": "resource",
                     "type": "array"
+                },
+                "precaution.enabled": {
+                    "default": true,
+                    "markdownDescription": "Enable/disable linting Python files with Precaution.",
+                    "scope": "resource",
+                    "type": "boolean"
                 },
                 "precaution.path": {
                     "default": [],
