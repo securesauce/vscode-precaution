@@ -26,7 +26,6 @@
     "keywords": [
         "python",
         "linting",
-        "formatting",
         "precaution"
     ],
     "engines": {
@@ -34,8 +33,7 @@
     },
     "categories": [
         "Programming Languages",
-        "Linters",
-        "Formatters"
+        "Linters"
     ],
     "extensionDependencies": [
         "ms-python.python"
