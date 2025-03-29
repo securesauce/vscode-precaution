@@ -4,7 +4,7 @@
 
 A Visual Studio Code extension with for the Precaution static analysis security tool. This extension comes bundled with `precli` version 0.8.0.
 
-This extension supports all [actively supported versions](https://devguide.python.org/#status-of-python-branches) of the Python language.
+It is compatible with all [actively supported versions](https://devguide.python.org/#status-of-python-branches) of the Python language.
 
 For more information on Precaution, see https://precli.readthedocs.io/
 
