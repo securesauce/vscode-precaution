@@ -3,7 +3,6 @@
 """
 Test for linting over LSP.
 """
-
 from threading import Event
 
 from hamcrest import assert_that, is_
@@ -64,6 +63,36 @@ def test_linting_example():
                         "href": "https://docs.securesauce.dev/rules/PY004"
                     },
                     "source": SERVER_INFO["name"],
+                    "data": {
+                        "fixes": [
+                            {
+                                "description": {
+                                    "text": (
+                                        "For cryptographic purposes, use a hash length of "
+                                        "at least 256-bits with hashes such as SHA-256."
+                                    )
+                                },
+                                "artifactChanges": [
+                                    {
+                                        "replacements": [
+                                            {
+                                                "deletedRegion": {
+                                                    "endColumn": 18,
+                                                    "endLine": 3,
+                                                    "startColumn": 13,
+                                                    "startLine": 3,
+                                                },
+                                                "insertedContent": {"text": '"sha256"'},
+                                            }
+                                        ],
+                                        "artifactLocation": {
+                                            "uri": TEST_FILE_URI,
+                                        },
+                                    }
+                                ],
+                            }
+                        ]
+                    },
                 },
             ],
         }

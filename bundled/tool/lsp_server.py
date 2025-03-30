@@ -7,6 +7,7 @@ import copy
 import json
 import os
 import pathlib
+import platform
 import sys
 import traceback
 from typing import Any, Optional, Sequence
@@ -105,13 +106,11 @@ def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
     return _parse_output(result.stdout) if result.stdout else []
 
 
+# pylint: disable=too-many-locals
 def _parse_output(content: str) -> list[lsp.Diagnostic]:
     run = json.loads(content)["runs"][0] or {}
     results = run.get("results") or []
     diagnostics: list[lsp.Diagnostic] = []
-
-    line_offset = 1
-    col_offset = 1
 
     for result in results:
         location = result["locations"][0]["physicalLocation"]
@@ -125,13 +124,20 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
         )
 
         start = lsp.Position(
-            line=location["region"]["startLine"] - line_offset,
-            character=location["region"]["startColumn"] - col_offset,
+            line=location["region"]["startLine"] - 1,
+            character=location["region"]["startColumn"] - 1,
         )
         end = lsp.Position(
-            line=location["region"]["endLine"] - line_offset,
-            character=location["region"]["endColumn"] - col_offset,
+            line=location["region"]["endLine"] - 1,
+            character=location["region"]["endColumn"] - 1,
         )
+        fixes = result.get("fixes") or []
+        # NOTE: hacky fix for Windows unit test. Normalize to lower case
+        if platform.system() == "Windows":
+            for fix in fixes:
+                uri = fix["artifactChanges"][0]["artifactLocation"]["uri"]
+                fix["artifactChanges"][0]["artifactLocation"]["uri"] = uri.lower()
+
         diagnostic = lsp.Diagnostic(
             range=lsp.Range(
                 start=start,
@@ -144,6 +150,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 href=rule["helpUri"],
             ),
             source=TOOL_DISPLAY,
+            data={"fixes": fixes},
         )
         diagnostics.append(diagnostic)
 
@@ -163,6 +170,69 @@ def _get_severity(code: str) -> lsp.DiagnosticSeverity:
 
 # **********************************************************
 # Linting features end here
+# **********************************************************
+
+
+# **********************************************************
+# Code Action features start here
+# **********************************************************
+
+
+@LSP_SERVER.feature(
+    lsp.TEXT_DOCUMENT_CODE_ACTION,
+    lsp.CodeActionOptions(
+        code_action_kinds=[lsp.CodeActionKind.QuickFix], resolve_provider=True
+    ),
+)
+def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
+    """LSP handler for textDocument/codeAction request."""
+
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    settings = copy.deepcopy(_get_settings_by_document(document))
+    code_actions = []
+    if not settings["enabled"]:
+        return code_actions
+
+    diagnostics = (d for d in params.context.diagnostics if d.source == TOOL_DISPLAY)
+
+    for diagnostic in diagnostics:
+        fixes = diagnostic.data.get("fixes") or []
+
+        for fix in fixes:
+            edits = []
+            for change in fix["artifactChanges"]:
+                for replacement in change["replacements"]:
+                    region = replacement["deletedRegion"]
+                    new_text = replacement["insertedContent"]["text"]
+
+                    edit = lsp.TextEdit(
+                        range=lsp.Range(
+                            start=lsp.Position(
+                                region["startLine"] - 1, region["startColumn"] - 1
+                            ),
+                            end=lsp.Position(
+                                region["endLine"] - 1, region["endColumn"] - 1
+                            ),
+                        ),
+                        new_text=new_text,
+                    )
+                    edits.append(edit)
+
+            code_actions.append(
+                lsp.CodeAction(
+                    title=fix["description"]["text"],
+                    kind=lsp.CodeActionKind.QuickFix,
+                    diagnostics=[diagnostic],
+                    edit=lsp.WorkspaceEdit(changes={params.text_document.uri: edits}),
+                    is_preferred=True,
+                )
+            )
+
+    return code_actions
+
+
+# **********************************************************
+# Code Action features end here
 # **********************************************************
 
 
