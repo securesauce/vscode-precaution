@@ -45,7 +45,6 @@ GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
-# TODO: Update the language server name and version.
 LSP_SERVER = server.LanguageServer(
     name="precli-server", version="v0.1.0", max_workers=MAX_WORKERS
 )
@@ -91,6 +90,16 @@ def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
     LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+
+
+# @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
+# def did_change(params: lsp.DidChangeTextDocumentParams) -> None:
+#    """LSP handler for textDocument/didChange request."""
+#    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
+#    new_text = params.content_changes[0].text
+#    document.source = new_text
+#    diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+#    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
@@ -178,6 +187,16 @@ def _get_severity(code: str) -> lsp.DiagnosticSeverity:
 # **********************************************************
 
 
+def severity_to_str(severity: int) -> str:
+    """Convert DiagnosticSeverity to a string."""
+    return {
+        lsp.DiagnosticSeverity.Error: "error",
+        lsp.DiagnosticSeverity.Warning: "warning",
+        lsp.DiagnosticSeverity.Information: "info",
+        lsp.DiagnosticSeverity.Hint: "hint",
+    }.get(severity, "unknown")
+
+
 @LSP_SERVER.feature(
     lsp.TEXT_DOCUMENT_CODE_ACTION,
     lsp.CodeActionOptions(
@@ -186,7 +205,7 @@ def _get_severity(code: str) -> lsp.DiagnosticSeverity:
 )
 def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
     """LSP handler for textDocument/codeAction request."""
-
+    uri = params.text_document.uri
     document = LSP_SERVER.workspace.get_document(params.text_document.uri)
     settings = copy.deepcopy(_get_settings_by_document(document))
     code_actions = []
@@ -223,8 +242,31 @@ def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
                     title=fix["description"]["text"],
                     kind=lsp.CodeActionKind.QuickFix,
                     diagnostics=[diagnostic],
-                    edit=lsp.WorkspaceEdit(changes={params.text_document.uri: edits}),
+                    edit=lsp.WorkspaceEdit(changes={uri: edits}),
                     is_preferred=True,
+                )
+            )
+
+            # Create action to suppress the issue
+            rule_id = diagnostic.code.split(":")[0]
+            severity = severity_to_str(diagnostic.severity)
+            line_number = diagnostic.range.start.line
+
+            line_text = document.lines[line_number]
+            suppress_comment = f"{line_text.rstrip()}  # suppress: {rule_id}"
+
+            start = lsp.Position(line=line_number, character=0)
+            end = lsp.Position(line=line_number, character=len(line_text))
+
+            replace_range = lsp.Range(start=start, end=end)
+            edit = lsp.TextEdit(range=replace_range, new_text=suppress_comment)
+
+            code_actions.append(
+                lsp.CodeAction(
+                    title=f"Add '# suppress: {rule_id}' to suppress {severity}",
+                    kind=lsp.CodeActionKind.QuickFix,
+                    diagnostics=[diagnostic],
+                    edit=lsp.WorkspaceEdit(changes={uri: [edit]}),
                 )
             )
 
