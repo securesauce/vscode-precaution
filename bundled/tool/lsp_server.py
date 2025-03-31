@@ -247,28 +247,28 @@ def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
                 )
             )
 
-            # Create action to suppress the issue
-            rule_id = diagnostic.code.split(":")[0]
-            severity = severity_to_str(diagnostic.severity)
-            line_number = diagnostic.range.start.line
+        # Create action to suppress the issue
+        rule_id = diagnostic.code.split(":")[0]
+        severity = severity_to_str(diagnostic.severity)
+        line_number = diagnostic.range.start.line
 
-            line_text = document.lines[line_number]
-            suppress_comment = f"{line_text.rstrip()}  # suppress: {rule_id}"
+        line_text = document.lines[line_number]
+        suppress_comment = f"{line_text.rstrip()}  # suppress: {rule_id}"
 
-            start = lsp.Position(line=line_number, character=0)
-            end = lsp.Position(line=line_number, character=len(line_text))
+        replace_range = lsp.Range(
+            start=lsp.Position(line=line_number, character=0),
+            end=lsp.Position(line=line_number, character=len(line_text)),
+        )
+        edit = lsp.TextEdit(range=replace_range, new_text=suppress_comment)
 
-            replace_range = lsp.Range(start=start, end=end)
-            edit = lsp.TextEdit(range=replace_range, new_text=suppress_comment)
-
-            code_actions.append(
-                lsp.CodeAction(
-                    title=f"Add '# suppress: {rule_id}' to suppress {severity}",
-                    kind=lsp.CodeActionKind.QuickFix,
-                    diagnostics=[diagnostic],
-                    edit=lsp.WorkspaceEdit(changes={uri: [edit]}),
-                )
+        code_actions.append(
+            lsp.CodeAction(
+                title=f"Add '# suppress: {rule_id}' to suppress {severity}",
+                kind=lsp.CodeActionKind.QuickFix,
+                diagnostics=[diagnostic],
+                edit=lsp.WorkspaceEdit(changes={uri: [edit]}),
             )
+        )
 
     return code_actions
 
@@ -448,16 +448,6 @@ def _run_tool_on_document(
     argv += TOOL_ARGS + settings["args"] + extra_args
 
     if use_stdin:
-        # TODO: update these to pass the appropriate arguments to provide document contents
-        # to tool via stdin.
-        # For example, for pylint args for stdin looks like this:
-        #     pylint --from-stdin <path>
-        # Here `--from-stdin` path is used by pylint to make decisions on the file contents
-        # that are being processed. Like, applying exclusion rules.
-        # It should look like this when you pass it:
-        #     argv += ["--from-stdin", document.path]
-        # Read up on how your tool handles contents via stdin. If stdin is not supported use
-        # set use_stdin to False, or provide path, what ever is appropriate for your tool.
         argv += ["-"]
     else:
         argv += [document.path]
