@@ -74,6 +74,7 @@ VSCODE_DEFAULT_INITIALIZE = {
                 "willSave": True,
                 "willSaveWaitUntil": True,
                 "didSave": True,
+                "didChange": False,
             },
             "completion": {
                 "dynamicRegistration": True,
