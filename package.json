@@ -2,7 +2,7 @@
     "name": "precaution",
     "displayName": "Precaution",
     "description": "%extension.description%",
-    "version": "2025.14.0",
+    "version": "2025.14.1",
     "preview": true,
     "serverInfo": {
         "name": "Precaution",
