@@ -2,7 +2,7 @@
     "name": "precaution",
     "displayName": "Precaution",
     "description": "Linting support for files using Precaution.",
-    "version": "2025.3.2",
+    "version": "2025.14.0",
     "preview": true,
     "serverInfo": {
         "name": "Precaution",
