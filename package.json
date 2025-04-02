@@ -1,7 +1,7 @@
 {
     "name": "precaution",
     "displayName": "Precaution",
-    "description": "Linting support for files using Precaution.",
+    "description": "%extension.description%",
     "version": "2025.14.0",
     "preview": true,
     "serverInfo": {
@@ -72,7 +72,7 @@
             "properties": {
                 "precaution.args": {
                     "default": [],
-                    "description": "Arguments passed in. Each argument is a separate item in the array.",
+                    "markdownDescription": "%settings.args.description%",
                     "items": {
                         "type": "string"
                     },
@@ -81,13 +81,13 @@
                 },
                 "precaution.enabled": {
                     "default": true,
-                    "markdownDescription": "Enable/disable linting Python files with Precaution.",
+                    "markdownDescription": "%settings.enabled.description%",
                     "scope": "resource",
                     "type": "boolean"
                 },
                 "precaution.path": {
                     "default": [],
-                    "description": "When set to a path to precli binary, extension will use that. NOTE: Using this option may slowdown server response time.",
+                    "markdownDescription": "%settings.path.description%",
                     "scope": "resource",
                     "items": {
                         "type": "string"
@@ -96,21 +96,21 @@
                 },
                 "precaution.importStrategy": {
                     "default": "useBundled",
-                    "description": "Defines where `precli` is imported from. This setting may be ignored if `precaution.path` is set.",
+                    "markdownDescription": "%settings.importStrategy.description%",
                     "enum": [
                         "useBundled",
                         "fromEnvironment"
                     ],
                     "enumDescriptions": [
-                        "Always use the bundled version of `precli`.",
-                        "Use `precli` from environment, fallback to bundled version only if `precli` not available in the environment."
+                        "%settings.importStrategy.useBundled.description%",
+                        "%settings.importStrategy.fromEnvironment.description%"
                     ],
                     "scope": "window",
                     "type": "string"
                 },
                 "precaution.interpreter": {
                     "default": [],
-                    "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
+                    "markdownDescription": "%settings.interpreter.description%",
                     "scope": "resource",
                     "items": {
                         "type": "string"
@@ -119,7 +119,7 @@
                 },
                 "precaution.showNotifications": {
                     "default": "off",
-                    "description": "Controls when notifications are shown by this extension.",
+                    "markdownDescription": "%settings.showNotifications.description%",
                     "enum": [
                         "off",
                         "onError",
@@ -127,10 +127,10 @@
                         "always"
                     ],
                     "enumDescriptions": [
-                        "All notifications are turned off, any errors or warning are still available in the logs.",
-                        "Notifications are shown only in the case of an error.",
-                        "Notifications are shown for errors and warnings.",
-                        "Notifications are show for anything that the server chooses to show."
+                        "%settings.showNotifications.off.description%",
+                        "%settings.showNotifications.onError.description%",
+                        "%settings.showNotifications.onWarning.description%",
+                        "%settings.showNotifications.always.description%"
                     ],
                     "scope": "machine",
                     "type": "string"
@@ -139,7 +139,7 @@
         },
         "commands": [
             {
-                "title": "Restart Server",
+                "title": "%command.restartServer%",
                 "category": "Precaution",
                 "command": "precaution.restart"
             }
