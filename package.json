@@ -147,7 +147,7 @@
     },
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
-        "fs-extra": "^11.2.0",
+        "fs-extra": "^11.3.0",
         "rimraf": "^6.0.1",
         "vscode-languageclient": "^8.1.0"
     },
@@ -158,7 +158,7 @@
         "@types/vscode": "1.78.0",
         "@typescript-eslint/eslint-plugin": "^6.17.0",
         "@typescript-eslint/parser": "^6.17.0",
-        "@vscode/test-electron": "^2.4.1",
+        "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.3.2",
         "eslint": "^8.56.0",
         "glob": "^10.3.10",
