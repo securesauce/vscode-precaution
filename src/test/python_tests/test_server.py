@@ -3,6 +3,7 @@
 """
 Test for linting over LSP.
 """
+
 from threading import Event
 
 from hamcrest import assert_that, is_
