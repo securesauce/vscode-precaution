@@ -162,7 +162,7 @@
         "@vscode/vsce": "^3.3.2",
         "eslint": "^8.56.0",
         "glob": "^10.3.10",
-        "mocha": "^10.4.0",
+        "mocha": "^11.7.3",
         "prettier": "^3.5.3",
         "ts-loader": "^9.5.2",
         "typescript": "^5.3.3",
